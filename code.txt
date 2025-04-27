@@ -1,0 +1,88 @@
+# requirements.txt
+flask
+pandas
+scikit-surprise
+scikit-learn
+
+# db.py
+import pandas as pd
+
+def load_products(filepath='data/products.csv'):
+    products = pd.read_csv(filepath)
+    return products
+
+def load_interactions(filepath='data/interactions.csv'):
+    interactions = pd.read_csv(filepath)
+    return interactions
+
+# model.py
+from surprise import Dataset, Reader, SVD
+from surprise.model_selection import train_test_split
+import pandas as pd
+
+class SmartRecoModel:
+    def __init__(self, interactions_df):
+        self.interactions_df = interactions_df
+        self.model = None
+        self.train_model()
+
+    def train_model(self):
+        reader = Reader(rating_scale=(0, 1))
+        data = Dataset.load_from_df(self.interactions_df[['user_id', 'product_id', 'interaction']], reader)
+        trainset = data.build_full_trainset()
+        self.model = SVD()
+        self.model.fit(trainset)
+
+    def recommend(self, user_id, products_df, top_n=3):
+        all_product_ids = products_df['product_id'].tolist()
+        predictions = [(pid, self.model.predict(user_id, pid).est) for pid in all_product_ids]
+        predictions.sort(key=lambda x: x[1], reverse=True)
+        recommended_ids = [pid for pid, _ in predictions[:top_n]]
+        recommended_products = products_df[products_df['product_id'].isin(recommended_ids)]
+        return recommended_products
+
+# For quick testing
+if __name__ == "__main__":
+    from db import load_products, load_interactions
+
+    products = load_products()
+    interactions = load_interactions()
+
+    reco_model = SmartRecoModel(interactions)
+    recommendations = reco_model.recommend(user_id=1, products_df=products)
+    print(recommendations)
+
+# app.py
+from flask import Flask, request, jsonify
+from db import load_products, load_interactions
+from model import SmartRecoModel
+import pandas as pd
+
+app = Flask(__name__)
+
+products = load_products()
+interactions = load_interactions()
+reco_model = SmartRecoModel(interactions)
+
+@app.route("/track", methods=["POST"])
+def track():
+    data = request.get_json()
+    user_id = data.get("user_id")
+    product_id = data.get("product_id")
+    if not user_id or not product_id:
+        return jsonify({"error": "Missing user_id or product_id"}), 400
+    
+    global interactions
+    new_entry = pd.DataFrame({"user_id": [user_id], "product_id": [product_id], "interaction": [1]})
+    interactions = pd.concat([interactions, new_entry], ignore_index=True)
+    reco_model.interactions_df = interactions
+    reco_model.train_model()
+    return jsonify({"message": "Interaction tracked successfully"})
+
+@app.route("/recommend/<int:user_id>", methods=["GET"])
+def recommend(user_id):
+    recommended = reco_model.recommend(user_id=user_id, products_df=products)
+    return jsonify(recommended.to_dict(orient="records"))
+
+if __name__ == "__main__":
+    app.run(debug=True)

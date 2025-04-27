@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1 class="mb-4">Recommended For You</h1>
+
+{% if recommendations %}
+<div class="row">
+  {% for rec in recommendations %}
+    <div class="col-md-4 mb-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h5 class="card-title">{{ rec.name }}</h5>
+          <p class="card-text">
+            Category: {{ rec.category }}<br>
+            Price: ${{ rec.price }}
+          </p>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% else %}
+  <p>No recommendations yet. View some products to get personalized suggestions!</p>
+{% endif %}
+
+{% endblock %}
