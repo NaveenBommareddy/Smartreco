@@ -43,3 +43,18 @@ smartreco_website/
 │   └── images/
 ├── requirements.txt
 └── README.md
+
+
+## References for SmartReco 
+16.1 Research Papers / Concepts
+•	Ricci, F., Rokach, L., & Shapira, B. (2015). Recommender Systems Handbook — Springer
+•	Koren, Y., Bell, R., & Volinsky, C. (2009). Matrix Factorization Techniques for Recommender Systems. IEEE Computer
+•	Schafer, J.B., Frankowski, D., Herlocker, J., Sen, S. (2007). Collaborative Filtering Recommender Systems. In: The Adaptive Web
+16.2 Deployment References
+•	Gunicorn: Python WSGI HTTP Server for UNIX
+https://gunicorn.org/
+•	Render.com: Easy cloud hosting for Flask apps
+https://render.com/
+•	Heroku: PaaS platform for quick deployments
+https://www.heroku.com/
+  
